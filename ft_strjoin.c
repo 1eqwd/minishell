@@ -3,49 +3,39 @@
 /*                                                        :::      ::::::::   */
 /*   ft_strjoin.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: sumedai <sumedai@student.42.fr>            +#+  +:+       +#+        */
+/*   By: mawako <marvin@42.fr>                      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/01 16:17:59 by sumedai           #+#    #+#             */
-/*   Updated: 2025/03/08 14:11:30 by sumedai          ###   ########.fr       */
+/*   Created: 2025/03/21 16:04:50 by mawako            #+#    #+#             */
+/*   Updated: 2025/03/24 15:21:48 by mawako           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-char	*ft_strjoin(char const *s1, char const *s2)
+char	*ft_strjoin(const char *s1, const char *s2)
 {
 	char	*join;
-	int		i;
-	int		j;
+	size_t	i;
+	size_t	j;
+	size_t	len1;
+	size_t	len2;
 
-	i = 0;
-	j = 0;
 	if (!s1 || !s2)
 		return (NULL);
-	join = (char *)malloc(sizeof(char) * (strlen(s1) + strlen(s2) + 1));
+	len1 = strlen(s1);
+	len2 = strlen(s2);
+	join = (char *)malloc(sizeof(char) * (len1 + len2 + 1));
 	if (!join)
 		return (NULL);
-	while (s1[i])
+	i = 0;
+	while (i < len1)
 	{
 		join[i] = s1[i];
 		i++;
 	}
-	while (s2[j])
-	{
-		join[i + j] = s2[j];
-		j++;
-	}
-	join[i + j] = '\0';
+	j = 0;
+	while (j < len2)
+		join[i++] = s2[j++];
+	join[i] = '\0';
 	return (join);
 }
-
-// int main(void)
-// {
-//     char a[] = "qewfhfhg";
-//     char b[] = "12355";
-//     char *c = ft_strjoin(a,b);
-//     printf("%s\n",c);
-//     free(c);
-//     return(0);
-
-// }

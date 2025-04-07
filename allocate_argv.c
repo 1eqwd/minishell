@@ -3,62 +3,55 @@
 /*                                                        :::      ::::::::   */
 /*   allocate_argv.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: shuu <shuu@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: mawako <marvin@42.fr>                      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/08 16:12:53 by sumedai           #+#    #+#             */
-/*   Updated: 2025/03/16 17:38:36 by shuu             ###   ########.fr       */
+/*   Created: 2025/03/21 16:05:23 by mawako            #+#    #+#             */
+/*   Updated: 2025/03/31 17:54:30 by mawako           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-char **allocate_argv(t_token *tok, size_t size)
+char	**allocate_argv(t_token *tok, size_t size)
 {
-	char **heap;
+	char	**heap;
+	size_t	i;
 
-	// printf("size=%zu\n", size);
 	heap = (char **)malloc(sizeof(char *) * (size + 1));
 	if (!heap)
-		return(NULL);
-	size_t i = 0;
-	while (tok)
+		return (NULL);
+	i = 0;
+	while (tok && i < size)
 	{
-		heap[i] = (char *)malloc(sizeof(char) * (strlen(tok->word)));
+		heap[i] = (char *)malloc(sizeof(char) * (strlen(tok->word) + 1));
 		if (!heap[i])
 		{
-			//argv[i]をfreeする処理を書く
+			while (i > 0)
+				free(heap[--i]);
+			free(heap);
+			return (NULL);
 		}
-		i++;
+		strcpy(heap[i], tok->word);
 		tok = tok->next;
+		i++;
 	}
-	// printf("%zu\n", i);
+	heap[i] = NULL;
 	return (heap);
 }
 
-char **create_argv(t_token *tok)
+char	**create_argv(t_token *tok)
 {
-	// printf("create_argv in\n");
-	char **argv;
-	size_t size = 0;
-	t_token *tmp;
+	size_t	size;
+	t_token	*tmp;
+	char	**argv;
 
+	size = 0;
 	tmp = tok;
-	while (tmp)
+	while (tmp && tmp->word)
 	{
 		size++;
 		tmp = tmp->next;
 	}
 	argv = allocate_argv(tok, size);
-	if (!argv)
-		return (NULL);
-	size_t i = 0;
-	while ((i < size) && tok)
-	{
-		argv[i] = tok->word;
-		i++;
-		tok = tok->next;
-	}
-	argv[i] = NULL;
-	// printf("%s\n", argv[0]);
 	return (argv);
 }

@@ -1,39 +1,39 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   tokenizer.c                                        :+:      :+:    :+:   */
+/*   ft_substr.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mawako <marvin@42.fr>                      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/21 16:05:57 by mawako            #+#    #+#             */
-/*   Updated: 2025/03/28 17:21:55 by mawako           ###   ########.fr       */
+/*   Created: 2024/08/26 16:30:29 by mawako            #+#    #+#             */
+/*   Updated: 2025/03/26 18:27:11 by mawako           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-t_token	*tokenize(char *line)
+char	*ft_substr(char const *s, unsigned int start, size_t len)
 {
-	t_token	head;
-	t_token	*cur;
+	size_t	i;
+	char	*mem;
 
-	head.next = NULL;
-	cur = &head;
-	while (*line)
+	i = 0;
+	if (!s)
+		return (NULL);
+	if (start >= strlen(s))
 	{
-		if (consume_blank(&line, line))
-			continue ;
-		else if (is_metacharacter(*line) || check_redirect(line))
-		{
-			cur->next = operator_func(&line, line);
-			cur = cur->next;
-		}
-		else
-		{
-			cur->next = word_func(&line, line);
-			cur = cur->next;
-		}
+		mem = (char *)malloc(1);
+		if (mem)
+			mem[0] = '\0';
+		return (mem);
 	}
-	cur->next = new_token(NULL, TK_EOF);
-	return (head.next);
+	if (len > strlen(s) - start)
+		len = strlen(s) - start;
+	mem = (char *)malloc((len + 1) * sizeof(char));
+	if (!mem)
+		return (NULL);
+	while (i < len)
+		mem[i++] = s[start++];
+	mem[i] = '\0';
+	return (mem);
 }
