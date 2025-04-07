@@ -6,7 +6,7 @@
 /*   By: shuu <shuu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/27 19:38:22 by mawako            #+#    #+#             */
-/*   Updated: 2025/04/06 23:33:19 by shuu             ###   ########.fr       */
+/*   Updated: 2025/04/07 14:21:04 by shuu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,7 +117,7 @@ static int	exec_sh_c(char **argv, t_env *env)
 		return (258);
 	}
 	expansion(node, env);
-	setup_heredoc(node);
+	setup_heredoc(node, env);
 	status = exec(node, env);
 	free_node(node);
 	free_token(words);
@@ -360,7 +360,7 @@ void	interpret(char *line, int *stat_loc, t_env *env)
 		return ;
 	}
 	expansion(node, env);
-	setup_heredoc(node);
+	setup_heredoc(node, env);
 	*stat_loc = exec(node, env);
 	free_node(node);
 }
