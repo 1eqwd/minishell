@@ -6,7 +6,7 @@
 /*   By: mawako <marvin@42.fr>                      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/21 16:04:59 by mawako            #+#    #+#             */
-/*   Updated: 2025/04/03 15:23:19 by mawako           ###   ########.fr       */
+/*   Updated: 2025/04/16 16:58:48 by mawako           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ t_node	*new_node(t_node_kind kind)
 	node->filefd = 0;
 	node->stashed_targetfd = 0;
 	node->stashed_targetfd2 = 0;
+	node->child = NULL;
 	return (node);
 }
 
@@ -82,11 +83,23 @@ void	append_tok(t_token **tokens, t_token *tok)
 	append_tok(&(*tokens)->next, tok);
 }
 
+static int	is_fd_dup_op(const char *op)
+{
+	if (strcmp(op, ">&1") == 0 ||
+		strcmp(op, "1>&1") == 0 ||
+		strcmp(op, ">&2") == 0 ||
+		strcmp(op, "1>&2") == 0 ||
+		strcmp(op, "2>&1") == 0 ||
+		strcmp(op, "2>&2") == 0)
+		return (1);
+	return (0);
+}
+
 static int	is_redirect(const char *word)
 {
 	int			i;
 	static char *const	redirs[] = {
-		">>", "2>>", "<<", "<", ">", "2>", "1>", ">&1", "1>&1",
+		"1>>", "2>>", ">>", "<<", "<", ">", "2>", "1>", ">&1", "1>&1",
 		"1>&2", ">&2", "2>&2", "2>&1", "&>", ">&", NULL
 	};
 
@@ -109,7 +122,7 @@ static int	is_redirect_op(t_token *tok)
 	return (is_redirect(tok->word));
 }
 
-static int	is_control_operator(t_token *tok)
+static int	is_control_op(t_token *tok)
 {
 	if (!tok || tok->kind != TK_OP)
 		return (0);
@@ -126,14 +139,17 @@ static int	is_control_operator(t_token *tok)
 	return (0);
 }
 
-static t_node	*parse_simple_command(t_token **rest)
+t_node	*parse_simple_command(t_token **rest)
 {
 	t_node	*node;
 	t_token	*tok;
+	t_redirect	*redir;
 
 	tok = *rest;
 	node = new_node(ND_SIMPLE_CMD);
-	while (tok && tok->kind != TK_EOF && !is_control_operator(tok))
+	while (tok && tok->kind != TK_EOF &&
+		!is_control_op(tok) &&
+		!(tok->kind == TK_OP && strcmp(tok->word, ")") == 0))
 	{
 		if (tok->kind == TK_WORD)
 		{
@@ -142,17 +158,85 @@ static t_node	*parse_simple_command(t_token **rest)
 		}
 		else if (is_redirect_op(tok))
 		{
-			if (!tok->next || tok->next->kind != TK_WORD)
+			if (is_fd_dup_op(tok->word))
 			{
-				fprintf(stderr, "minishell: syntax error near unexpected token `newline'\n");
-				return (NULL);
+				redir = redirect_type2(&tok, tok, tok->word);
+				if (!redir)
+				{
+					fprintf(stderr, "minishell: syntax error with redirection operator '%s'\n", tok->word);
+					free_node(node);
+					return (NULL);
+				}
+				append_redirect(&node->redirects, redir);
 			}
-			append_redirect(&node->redirects, redirect_type(&tok, tok, tok->word));
+			else
+			{
+				if (!tok->next || tok->next->kind != TK_WORD)
+				{
+					fprintf(stderr, "minishell: syntax error near unexpected token `newline'\n");
+					free_node(node);
+					return (NULL);
+				}
+				append_redirect(&node->redirects, redirect_type(&tok, tok, tok->word));
+			}
 		}
 		else
 			fatal_error("parse_simple_command: unexpected token");
 	}
 	*rest = tok;
+	return (node);
+}
+
+static t_node	*parse_group_command(t_token **rest)
+{
+	t_token	*tok;
+	t_node	*head;
+	t_node	*cur;
+	t_node	*next_cmd;
+	t_node	*node;
+
+	tok = *rest;
+	head = NULL;
+	cur = NULL;
+	next_cmd = NULL;
+	if (!(tok && tok->kind == TK_OP && strcmp(tok->word, "(") == 0))
+	{
+		fprintf(stderr, "minishell: syntax error: expected '('\n");
+		return (NULL);
+	}
+	tok = tok->next;
+	while (tok && !(tok->kind == TK_OP && strcmp(tok->word, ")") == 0))
+	{
+		if (tok->kind == TK_OP && strcmp(tok->word, "(") == 0)
+			next_cmd = parse_group_command(&tok);
+		else
+			next_cmd = parse_simple_command(&tok);
+		if (!next_cmd)
+		{
+			free_node(head);
+			return (NULL);
+		}
+		if (!head)
+			head = next_cmd;
+		else
+			append_node(&cur->next, next_cmd);
+		cur = next_cmd;
+		if (is_control_op(tok) && !(tok->kind == TK_OP && strcmp(tok->word, ")") == 0))
+		{
+			cur->separator = strdup(tok->word);
+			tok = tok->next;
+		}
+	}
+	if (!tok || !(tok->kind == TK_OP && strcmp(tok->word, ")") == 0))
+	{
+		fprintf(stderr, "minishell: syntax error: missing ')'\n");
+		free_node(head);
+		return (NULL);
+	}
+	tok = tok->next;
+	*rest = tok;
+	node = new_node(ND_SUBSHELL);
+	node->child = head;
 	return (node);
 }
 
@@ -166,7 +250,15 @@ t_node	*parse(t_token *tok)
 	cur = NULL;
 	while (tok && tok->kind != TK_EOF)
 	{
-		next_cmd = parse_simple_command(&tok);
+		if (tok->kind == TK_OP && strcmp(tok->word, ")") == 0)
+		{
+			fprintf(stderr, "minishell: syntax error near unexpected token `)'\n");
+			return (NULL);
+		}
+		if (tok->kind == TK_OP && strcmp(tok->word, "(") == 0)
+			next_cmd = parse_group_command(&tok);
+		else
+			next_cmd = parse_simple_command(&tok);
 		if (!next_cmd)
 			return (NULL);
 		if (!head)
@@ -174,7 +266,7 @@ t_node	*parse(t_token *tok)
 		else
 			append_node(&cur->next, next_cmd);
 		cur = next_cmd;
-		if (is_control_operator(tok))
+		if (is_control_op(tok))
 		{
 			cur->separator = strdup(tok->word);
 			tok = tok->next;

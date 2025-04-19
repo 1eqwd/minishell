@@ -6,7 +6,7 @@
 /*   By: shuu <shuu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/26 18:05:29 by mawako            #+#    #+#             */
-/*   Updated: 2025/04/07 13:53:17 by shuu             ###   ########.fr       */
+/*   Updated: 2025/04/19 17:38:41 by shuu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ int	setup_heredoc(t_node *node, t_env *env)
 	heredoc_count = 0;
 	while (redir)
 	{
-		if (redir->type == R_HEREDOC)
+		if (redir->type == RD_HEREDOC)
 		{
 			snprintf(filename, sizeof(filename),
 				"/tmp/.heredoc_%d", heredoc_count++);

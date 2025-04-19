@@ -6,7 +6,7 @@
 /*   By: mawako <marvin@42.fr>                      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/21 17:49:56 by mawako            #+#    #+#             */
-/*   Updated: 2025/03/26 18:50:55 by mawako           ###   ########.fr       */
+/*   Updated: 2025/04/10 17:39:08 by mawako           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,4 +51,34 @@ void	free_node(t_node *node)
 	if (node->separator)
 		free(node->separator);
 	free(node);
+}
+
+void	free_argv(char **argv)
+{
+	size_t	i;
+
+	if (!argv)
+		return ;
+	i = 0;
+	while (argv[i])
+	{
+		free(argv[i]);
+		i++;
+	}
+	free(argv);
+}
+
+void	free_strs(char **strs)
+{
+	int	i;
+
+	if (!strs)
+		return ;
+	i = 0;
+	while (strs[i])
+	{
+		free(strs[i]);
+		i++;
+	}
+	free(strs);
 }

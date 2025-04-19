@@ -1,32 +1,38 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   expand_variables.c                                 :+:      :+:    :+:   */
+/*   interpret.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: shuu <shuu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/31 18:14:12 by mawako            #+#    #+#             */
-/*   Updated: 2025/04/19 17:20:56 by shuu             ###   ########.fr       */
+/*   Created: 2025/04/10 17:20:46 by mawako            #+#    #+#             */
+/*   Updated: 2025/04/19 17:48:20 by shuu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-char	*expand_variables(const char *str, t_env *env)
+void	interpret(char *line, int *status, t_env *env)
 {
-	char	*result;
-	int		i;
+	t_token	*words;
+	t_node	*node;
 
-	result = calloc(1, 1);
-	if (!result)
-		return (NULL);
-	i = 0;
-	while (str[i])
+	words = tokenize(line);
+	if (!words || words->kind == TK_EOF)
 	{
-		if (str[i] == '$')
-			handle_dollar(str, &i, &result, env);
-		else
-			append_char(&result, str[i++]);
+		*status = ERROR_TOKENIZE;
+		free_token(words);
+		return ;
 	}
-	return (result);
+	node = parse(words);
+	free_token(words);
+	if (!node)
+	{
+		*status = 258;
+		return ;
+	}
+	expansion(node, env);
+	setup_heredoc(node, env);
+	*status = exec_tree(node, env);
+	free_node(node);
 }

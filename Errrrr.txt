@@ -1,0 +1,10 @@
+tail -f log.txt | grep 'keyword' &
+echo $!
+
+(ls | cat) & echo $!
+
+export VAR="Hello" && echo $VAR
+
+ls |
+
+CtrlC when secondary prompt

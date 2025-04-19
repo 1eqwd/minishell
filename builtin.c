@@ -6,7 +6,7 @@
 /*   By: shuu <shuu@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/21 18:03:45 by mawako            #+#    #+#             */
-/*   Updated: 2025/04/06 23:10:26 by shuu             ###   ########.fr       */
+/*   Updated: 2025/04/19 17:22:08 by shuu             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ static void	update_env(const char *key, const char *value, t_env *env)
 			free(env->g_env[i]);
 			env->g_env[i] = new_entry;
 			env->environ = env->g_env;
-			return;
+			return ;
 		}
 		i++;
 	}
@@ -102,12 +102,12 @@ static void	remove_env(const char *key, t_env *env)
 		if (strncmp(env->g_env[i], key, key_len) == 0 && env->g_env[i][key_len] == '=')
 		{
 			index_to_remove = i;
-			break;
+			break ;
 		}
 		i++;
 	}
 	if (index_to_remove == -1)
-		return;
+		return ;
 	free(env->g_env[index_to_remove]);
 	new_env = malloc(sizeof(char *) * (count));
 	if (!new_env)
@@ -119,7 +119,7 @@ static void	remove_env(const char *key, t_env *env)
 		if (i == index_to_remove)
 		{
 			i++;
-			continue;
+			continue ;
 		}
 		new_env[j++] = env->g_env[i];
 		i++;
@@ -201,11 +201,8 @@ static int	builtin_echo(char **argv)
 		if (interpret)
 		{
 			processed = interpret_escapes(argv[i]);
-			if (processed)
-			{
-				printf("%s", processed);
-				free(processed);
-			}
+			printf("%s", processed);
+			free(processed);
 		}
 		else
 			printf("%s", argv[i]);
